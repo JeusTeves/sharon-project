@@ -1,12 +1,13 @@
 # sharon-project
 Student Queue System using Mysql and PHP
 Functions Explain below
+
     Login (process_login.php):
         Starts or resumes a session.
         Validates user login credentials against the user_login table in the database.
         If successful, sets a session variable 'user' with the username and redirects to student_management.php.
         If unsuccessful, redirects back to login.php with an error parameter.
-
+        
     Student Management (student_management.php):
         Ensures that the user is logged in; otherwise, redirects to login.php.
         Retrieves student queue data from the database and displays it in a table.
