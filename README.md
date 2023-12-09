@@ -1,6 +1,5 @@
 # sharon-project
 Student Queue System using Mysql and PHP
-Functions Explain below
 
     Login (process_login.php):
         Starts or resumes a session.
