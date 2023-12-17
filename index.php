@@ -1,91 +1,66 @@
 <?php
-// Include the configuration file (assumed to contain functions and constants)
 include('config.php');
 
-// Database connection parameters
 $host = "localhost";
 $username = "root";
 $password = "";
 $database = "student_queue_system";
 
-// Establish connection to the MySQL database server with the selected database
 $conn = mysqli_connect($host, $username, $password, $database);
 
-// Check connection and handle errors
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Array to store validation errors
 $errors = [];
-
-// Find the available queue number using the defined function
 $availableQueueNumber = findAvailableQueueNumber();
 
-// Check if the form is submitted using POST method
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Array of required form fields
     $requiredFields = ['name', 'email', 'department', 'date', 'time'];
 
-    // Validate required fields
     foreach ($requiredFields as $field) {
         if (empty($_POST[$field])) {
             $errors[] = "The '$field' field must be filled out.";
         }
     }
-
-    // If no validation errors, proceed with form submission
     if (empty($errors)) {
-        // Retrieve form data
-        $name = $_POST['name'];
-        $email = $_POST['email'];
-        $course = $_POST['department'];
-        $date = $_POST['date'];
-        $time = $_POST['time'];
+        $name = mysqli_real_escape_string($conn, $_POST['name']);
+        $email = mysqli_real_escape_string($conn, $_POST['email']);
+        $course = mysqli_real_escape_string($conn, $_POST['department']);
+        $date = mysqli_real_escape_string($conn, $_POST['date']);
+        $time = mysqli_real_escape_string($conn, $_POST['time']);
 
-        // SQL query to insert a new record into the 'student_queue' table
         $queryInsertQueue = "INSERT INTO student_queue (queue_number, name, email, course, date, time, status) VALUES ('$availableQueueNumber', '$name', '$email', '$course', '$date', '$time', 'Pending')";
 
-        // Execute the insert query
         if (mysqli_query($conn, $queryInsertQueue)) {
-            // Increment the available queue number for the next submission
             $availableQueueNumber++;
-            // Set a flag to display a success popup
             $successPopup = true;
         } else {
-            // Add an error message if the insert query fails
             $errors[] = "Error: " . mysqli_error($conn);
         }
     }
 }
 
-// Close the database connection
 mysqli_close($conn);
 
-// Function to find the available queue number
 function findAvailableQueueNumber() {
     global $conn;
 
-    // Query to find the maximum queue number in the 'student_queue' table
     $queryMaxQueueNumber = "SELECT MAX(queue_number) FROM student_queue";
     $resultMaxQueueNumber = mysqli_query($conn, $queryMaxQueueNumber);
     $row = mysqli_fetch_array($resultMaxQueueNumber);
     $maxQueueNumber = $row[0];
 
-    // Initialize the available queue number
     $availableQueueNumber = 0;
 
-    // Query to find distinct used queue numbers in the 'student_queue' table
     $queryUsedQueueNumbers = "SELECT DISTINCT queue_number FROM student_queue";
     $resultUsedQueueNumbers = mysqli_query($conn, $queryUsedQueueNumbers);
     $usedQueueNumbers = [];
 
-    // Store used queue numbers in an array
     while ($row = mysqli_fetch_assoc($resultUsedQueueNumbers)) {
         $usedQueueNumbers[] = $row['queue_number'];
     }
 
-    // Find the first available queue number not in use
     while (in_array($availableQueueNumber, $usedQueueNumbers) && $availableQueueNumber <= $maxQueueNumber + 1) {
         $availableQueueNumber++;
     }
@@ -97,16 +72,242 @@ function findAvailableQueueNumber() {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- HTML head section with meta tags and styles -->
-    <!-- ... (styles not included for brevity) ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Queue System</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        * {
+    margin: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 10%;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url(nemsu1.jpg);
+            background-repeat:no-repeat;
+            background-attachment:fixed;
+            background-size:100% 100%;
+            overflow: hidden;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+           
+        }
+
+        .container {
+            display: flex;
+            flex-direction:column;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 25px;
+            box-shadow: inset -5px -5px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            width: 25%;
+            text-align: center;
+            margin: auto;
+            position:absolute;
+            top: 22%;
+            z-index: 1;
+            
+        }
+
+        
+        .form{
+            color: white;
+            font-family: initial;
+            font-size: 22px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 2px solid #0004ff;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        button {
+            background-color: blue;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            border: 2px solid white;
+            width: 150px;
+            height: 43px;
+        }
+
+        button:hover {
+            background-color: black;
+            color:white;
+            border: 2px solid red;
+            
+        }
+
+        .error-message {
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #4caf50;
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            color:aqua;
+        }
+
+        a:hover {
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 90%;
+            }
+        }
+        .box{
+            position: relative;
+            width: 40vw;
+            height: 11vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: -60%; 
+            margin: auto; 
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 25px;
+            box-shadow: inset -5px -5px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+           
+        }
+        .box h2 {
+            color:#fff;
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px #00b3ff,
+                        0 0 20px #00b3ff,
+                        0 0 40px #00b3ff,
+                        0 0 80px #00b3ff,
+                        0 0 120px #00b3ff;
+            margin: 0;
+        }
+        body, .form, label, button {
+        font-size: 1.3rem;
+        }
+        .lightbar {
+            position: absolute;
+            top:0;
+            left:0;
+            width: 10px;
+            height: 100%;
+            border-radius: 10px;
+            background: #fff;
+            z-index:2;
+            box-shadow: 0 0 10px #00b3ff,
+                        0 0 20px #00b3ff,
+                        0 0 40px #00b3ff,
+                        0 0 80px #00b3ff,
+                        0 0 120px #00b3ff;
+            animation: animatelightbar 5s linear infinite;
+        }
+        @keyframes animatelightbar
+        {
+            0%,5%
+            {
+                transform: scaleY(0) translateX(0);
+            }
+            10%
+            {
+                transform: scaleY(1) translateX(0);
+            }
+            90%
+            {
+                transform: scaleY(1) translateX(calc(600px -
+                10px));
+            }
+            95%,100%
+            {
+                transform: scaleY(0) translateX(calc(600px -
+                10px));
+            }
+        }
+        .topLayer{
+            
+            position: absolute;
+            top:0;
+            left:0;
+            width: 100%;
+            height: 100%;
+            background:hidden;
+            animation: animatetopLayer 10s linear infinite;
+        }
+        @keyframes animatetopLayer
+        {
+            0%,2.5%
+            {
+                transform:  translateX(0);
+            }
+            5%
+            {
+                transform:  translateX(0);
+            }
+            45%
+            {
+                transform:  translateX(100%);
+                
+            }
+            47.5%,50%
+            {
+                transform:  translateX(100%);
+            }
+
+           50.001%,52.5%
+            {
+                transform:  translateX(-100%);
+            }
+            55%
+            {
+                transform:  translateX(-100%);
+            }
+            95%
+            {
+                transform:  translateX(0%);
+                
+            }
+            97.5%,100%
+            {
+                transform:  translateX(0%);
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- HTML body section -->
-    <div class="container">
+<div class="box">
+        <div class="lightbar"></div>
+        <div class="topLayer"></div>
         <h2>Student Queue System</h2>
-
+    </div>
+    <div class="container">
         <?php
-        // Display validation errors if any
         if (!empty($errors)) {
             echo '<div class="error-message">';
             foreach ($errors as $error) {
@@ -115,26 +316,59 @@ function findAvailableQueueNumber() {
             echo '</div>';
         }
 
-        // Display a success popup if the form was submitted successfully
         if (isset($successPopup)) {
-            echo '<script>alert("Form submitted successfully!");</script>';
+            echo '<script>
+            if (confirm("Form submitted successfully! Go to waiting list?")) {
+                window.location.href = "waiting_list.php";
+            } else {
+                window.location.href = "index.php";
+            }
+            </script>';
         }
         ?>
-
-        <!-- HTML form for student queue submission -->
+        <div class="form">
         <form action="index.php" method="post">
-            <!-- Form fields, some pre-filled with data -->
+            <div class="queue">
             <label for="queueNumber">Queue Number:</label>
-            <input type="text" name="queueNumber" value="<?php echo $availableQueueNumber; ?>" readonly class="center-input" disabled>
+            <input style="color:white; font-size:15px"type="text" name="queueNumber" value="<?php echo $availableQueueNumber; ?>" readonly class="center-input" disabled>
+            </div>
+            <label for="name">Name:</label>
+            <input type="text" placeholder="Enter Your Name" name="name" required>
 
-            <!-- ... (other form fields) ... -->
+            <label for="email">Email:</label>
+            <input type="email" placeholder="Enter Your Email" name="email" required>
 
-            <!-- Submit button -->
-            <button type="submit">Submit</button>
-        </form>
+            <label for="department">Department:</label>
+            <select name="department" required>
+                <option value="" disabled selected>Select a Department</option>
+                <option value="Industrial Technology">Department of Industrial Technology</option>
+                <option value="General Teacher Training">Department of General Teacher Training</option>
+                <option value="Business & Management">Department Of Business & Management</option>
+                <option value="Computer Studies">Department of Computer Studies</option>
+                <option value="Public Administration">Department of Public Administration</option>
+                <option value="Criminal Justice Education">Department of Criminal Justice Education</option>
+            </select>
 
-        <!-- Link to the student management page -->
-        <a href="student_management.php">Student Management</a>
-    </div>
+            <label for="date">Date:</label>
+            <input type="date" name="date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" required>
+
+            <label for="time">Time:</label>
+            <select name="time" required>
+                <option value="08:00">8am</option>
+                <option value="13:00">1pm</option>
+            </select>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+    <form action="index.php" method="post">
+        <button type="submit">Submit</button>
+    </form>
+
+    <form action="waiting_list.php" method="post">
+        <button type="submit" style="margin-left: 10px;">Waiting List</button>
+    </form>
+</div>
+
+<a href="student_management.php">Student Management</a>
+</div>
 </body>
 </html>
